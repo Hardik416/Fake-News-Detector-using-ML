@@ -1,0 +1,74 @@
+# ═══════════════════════════════════════════════════════════
+#  TruthLens — Fake News Detection System
+#  requirements.txt
+# ═══════════════════════════════════════════════════════════
+
+# ─── Core ML & Data ─────────────────────────────────────
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# ─── Gradient Boosting ──────────────────────────────────
+xgboost>=2.0.0
+
+# ─── NLP ────────────────────────────────────────────────
+nltk>=3.8.0
+
+# ─── Language Detection & Translation ───────────────────
+langdetect>=1.0.9
+deep-translator>=1.11.0
+
+# ─── Explainability ─────────────────────────────────────
+lime>=0.2.0.1
+shap>=0.43.0
+
+# ─── Transformer / BERT (optional, Week 4) ──────────────
+transformers>=4.35.0
+torch>=2.0.0          # CPU version — for GPU: torch>=2.0.0+cu118
+datasets>=2.14.0      # HuggingFace datasets (for BERT fine-tuning)
+tokenizers>=0.14.0
+
+# ─── Topic Modeling ─────────────────────────────────────
+# LDA is in scikit-learn (no extra install)
+# For advanced topic modeling (optional):
+# gensim>=4.3.0
+
+# ─── Visualization ──────────────────────────────────────
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0        # for interactive charts in dashboard
+
+# ─── Web App ────────────────────────────────────────────
+flask>=3.0.0
+flask-cors>=4.0.0     # for API cross-origin support
+gunicorn>=21.0.0      # for production deployment
+
+# ─── Jupyter (for running notebooks) ────────────────────
+jupyter>=1.0.0
+notebook>=7.0.0
+ipywidgets>=8.0.0
+
+# ─── Utilities ──────────────────────────────────────────
+tqdm>=4.66.0          # progress bars during training
+joblib>=1.3.0         # model persistence (used by sklearn)
+python-dotenv>=1.0.0  # for environment variables
+
+# ─── Testing ────────────────────────────────────────────
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# ─── PDF upload support (optional) ──────────────────────
+PyMuPDF>=1.23.0       # pip install pymupdf
+
+# ═══════════════════════════════════════════════════════════
+# INSTALL ORDER (to avoid conflicts):
+#   pip install numpy pandas scikit-learn
+#   pip install xgboost nltk langdetect deep-translator
+#   pip install lime shap
+#   pip install flask gunicorn
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install transformers datasets tokenizers
+#   pip install matplotlib seaborn plotly
+#   pip install pytest jupyter tqdm
+# ═══════════════════════════════════════════════════════════

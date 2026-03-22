@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TruthLens — Fake News Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08080f; --surface: #0f0f1a; --border: rgba(255,255,255,0.08);
+      --accent: #7c6af7; --accent2: #3ecf8e; --text: #f0effe; --muted: #7a7a9a;
+      --danger: #ff6b6b; --sans: 'Syne', sans-serif; --mono: 'Space Mono', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 40px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: rgba(8,8,15,0.85);
+      backdrop-filter: blur(20px); z-index: 100;
+    }
+    .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.03em; }
+    .logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      max-width: 860px; margin: 0 auto; padding: 80px 40px 60px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(124,106,247,0.12); border: 1px solid rgba(124,106,247,0.3);
+      border-radius: 20px; padding: 6px 14px; font-family: var(--mono);
+      font-size: 11px; color: #a89ff8; letter-spacing: 0.06em; margin-bottom: 24px;
+    }
+    .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+      animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    h1 {
+      font-size: clamp(36px, 6vw, 58px); font-weight: 800; line-height: 1.1;
+      letter-spacing: -0.04em; margin-bottom: 18px;
+    }
+    h1 .gradient {
+      background: linear-gradient(135deg, #7c6af7, #3ecf8e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub { font-size: 16px; color: var(--muted); line-height: 1.7; max-width: 600px; margin: 0 auto 48px; }
+
+    /* FORM CARD */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px; max-width: 760px; margin: 0 auto;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    input[type="text"], input[type="url"] {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; color: var(--text);
+      font-family: var(--sans); font-size: 14px; transition: border-color .2s;
+    }
+    input[type="text"]:focus, input[type="url"]:focus, textarea:focus {
+      outline: none; border-color: rgba(124,106,247,0.5);
+    }
+    textarea {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; color: var(--text);
+      font-family: var(--sans); font-size: 14px; resize: vertical;
+      min-height: 160px; line-height: 1.6; transition: border-color .2s; width: 100%;
+    }
+    .char-count { font-size: 11px; color: var(--muted); text-align: right; font-family: var(--mono); }
+
+    .analyze-btn {
+      width: 100%; padding: 16px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #9c8bff);
+      color: white; font-family: var(--sans); font-size: 15px; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.02em; transition: opacity .2s, transform .15s;
+    }
+    .analyze-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .analyze-btn:active { transform: scale(0.99); }
+
+    .error-msg {
+      background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #ff8e8e;
+      margin-bottom: 16px;
+    }
+
+    /* FEATURES */
+    .features { max-width: 860px; margin: 80px auto; padding: 0 40px; }
+    .features h2 { font-size: 22px; font-weight: 700; margin-bottom: 32px; text-align: center; color: var(--muted); letter-spacing: 0.02em; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px;
+    }
+    .feature-icon { font-size: 24px; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      nav { padding: 16px 20px; }
+      .hero { padding: 50px 20px 40px; }
+      .form-card { padding: 24px 20px; }
+      .form-row { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Truth<span>Lens</span></div>
+  <div class="nav-links">
+    <a href="/">Analyze</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/compare">Model Comparison</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">
+    <div class="pulse"></div>
+    AI-POWERED · MULTILINGUAL · EXPLAINABLE
+  </div>
+  <h1>Detect <span class="gradient">Fake News</span><br>in Seconds</h1>
+  <p class="hero-sub">
+    Powered by TF-IDF, XGBoost, and fine-tuned DistilBERT. Supports English and Hindi.
+    Get confidence scores, source credibility analysis, and word-level explanations.
+  </p>
+
+  <div class="form-card">
+    {% if error %}
+    <div class="error-msg">⚠ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/predict">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Headline (optional)</label>
+          <input type="text" name="headline" placeholder="Article headline..." maxlength="300">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Source URL (optional)</label>
+          <input type="url" name="source_url" placeholder="https://example.com/article...">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>News Article Text *</label>
+        <textarea name="news_text" id="newsText"
+          placeholder="Paste the full news article here, or type the headline/claim you want to verify. Supports English and Hindi..."
+          oninput="updateCount(this)"></textarea>
+        <div class="char-count" id="charCount">0 characters</div>
+      </div>
+
+      <button type="submit" class="analyze-btn">
+        Analyze Article →
+      </button>
+    </form>
+  </div>
+</section>
+
+<section class="features">
+  <h2>What makes this different</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>3-Layer ML Pipeline</h3>
+      <p>Logistic Regression, XGBoost, and DistilBERT — compared and ensembled for best accuracy.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌐</div>
+      <h3>Hindi + English</h3>
+      <p>Auto-detects language. Translates Hindi to English, then classifies through the same pipeline.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3>Explainable AI</h3>
+      <p>LIME word highlighting shows exactly which words triggered the fake news classification.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Unsupervised Insights</h3>
+      <p>K-Means clustering and LDA topic modeling reveal hidden patterns in news corpora.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <h3>Source Credibility</h3>
+      <p>Domain reputation, URL patterns, and headline analysis combine into a credibility score.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Real-time Analysis</h3>
+      <p>Sub-second inference. Sentence-level highlighting. Confidence percentage for every prediction.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+function updateCount(el) {
+  document.getElementById('charCount').textContent = el.value.length + ' characters';
+}
+</script>
+</body>
+</html>
