@@ -229,7 +229,7 @@ class SHAPExplainer:
 # ─── Sentence-Level Highlighting ─────────────────────────────────────────────
 
 def highlight_suspicious_sentences(text: str, model, vectorizer,
-                                    threshold: float = 0.6) -> dict:
+                                    threshold: float = 0.85) -> dict:
     """
     Split article into sentences and score each independently.
     Highlights sentences that the model considers most fake-leaning.

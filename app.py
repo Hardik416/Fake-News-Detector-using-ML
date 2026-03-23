@@ -1,24 +1,12 @@
 """
-app.py
-------
-Flask web application for the Fake News Detection System.
-Routes:
-  GET  /          — Main input page
-  POST /predict   — Classify submitted text
-  GET  /dashboard — Unsupervised analytics dashboard
-  GET  /compare   — Model comparison table
-  POST /api/predict — JSON API endpoint
+app.py - TruthLens Fake News Detector
+Full pipeline: Language Detection → BERT + Classical ML → Credibility → Result
 """
 
-import os
-import sys
-import json
-import pickle
+import os, sys, json, pickle
 import numpy as np
+from flask import Flask, render_template, request, jsonify
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
-
-# Add src/ to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from preprocess import clean_text
@@ -28,49 +16,77 @@ from credibility import CredibilityScorer, combined_score
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'fakenews_detector_2024'
 
-# ─── Load Models at Startup ───────────────────────────────────────────────────
-
 MODELS_DIR = 'models/'
-predictor = None
-lime_explainer = None
-credibility_scorer = CredibilityScorer()
+BERT_DIR   = 'models/bert_model/'
+
+# Global model objects
+classical_predictor = None
+bert_model          = None
+bert_tokenizer      = None
+credibility_scorer  = CredibilityScorer()
+DEVICE              = None
 
 
 def load_models():
-    """Load trained models. Called once at startup."""
-    global predictor, lime_explainer
+    global classical_predictor, bert_model, bert_tokenizer, DEVICE
 
-    # Check if models exist
+    # 1. Classical ML model
     model_path = os.path.join(MODELS_DIR, 'best_model.pkl')
-    vec_path = os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl')
-
-    if not os.path.exists(model_path) or not os.path.exists(vec_path):
-        print("WARNING: Trained models not found. Run notebooks/02_Supervised_Models.ipynb first.")
-        return False
-
-    try:
-        from predict import FakeNewsPredictor
-        predictor = FakeNewsPredictor(model_path, vec_path)
-
+    vec_path   = os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl')
+    if os.path.exists(model_path) and os.path.exists(vec_path):
         try:
-            from explainability import LIMEExplainer
-            with open(model_path, 'rb') as f:
-                bundle = pickle.load(f)
-            with open(vec_path, 'rb') as f:
-                vectorizer = pickle.load(f)
-            lime_explainer = LIMEExplainer(bundle['model'], vectorizer)
-            print("LIME explainer loaded.")
+            from predict import FakeNewsPredictor
+            classical_predictor = FakeNewsPredictor(model_path, vec_path)
+            print(f'Classical model loaded: {classical_predictor.model_name}')
         except Exception as e:
-            print(f"LIME not available: {e}")
+            print(f'Classical model error: {e}')
+    else:
+        print('Classical model not found - run Notebook 02 first')
 
-        print("Models loaded successfully.")
-        return True
+    # 2. BERT model
+    bert_config = os.path.join(BERT_DIR, 'config.json')
+    if os.path.exists(bert_config):
+        try:
+            import torch
+            from transformers import (DistilBertTokenizerFast,
+                                      DistilBertForSequenceClassification)
+            DEVICE         = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            bert_tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_DIR)
+            bert_model     = DistilBertForSequenceClassification.from_pretrained(BERT_DIR)
+            bert_model     = bert_model.to(DEVICE)
+            bert_model.eval()
+            print(f'BERT model loaded on {DEVICE}')
+        except Exception as e:
+            print(f'BERT model error: {e}')
+    else:
+        print('BERT model not found - run Notebook 04 first')
+
+
+def predict_bert(text: str) -> dict:
+    try:
+        import torch
+        encoding = bert_tokenizer(
+            text, max_length=256, padding='max_length',
+            truncation=True, return_tensors='pt'
+        )
+        input_ids      = encoding['input_ids'].to(DEVICE)
+        attention_mask = encoding['attention_mask'].to(DEVICE)
+        with torch.no_grad():
+            outputs = bert_model(input_ids=input_ids, attention_mask=attention_mask)
+            probs   = torch.softmax(outputs.logits, dim=1)[0]
+            pred    = outputs.logits.argmax(dim=1).item()
+        fake_prob = round(probs[1].item(), 4)
+        real_prob = round(probs[0].item(), 4)
+        return {
+            'label':      'FAKE' if pred == 1 else 'REAL',
+            'fake_prob':  fake_prob,
+            'real_prob':  real_prob,
+            'confidence': round(max(probs).item(), 4),
+            'available':  True
+        }
     except Exception as e:
-        print(f"Error loading models: {e}")
-        return False
+        return {'available': False, 'error': str(e)}
 
-
-# ─── Routes ──────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
@@ -79,163 +95,118 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    text = request.form.get('news_text', '').strip()
-    url = request.form.get('source_url', '').strip()
+    text     = request.form.get('news_text', '').strip()
+    url      = request.form.get('source_url', '').strip()
     headline = request.form.get('headline', '').strip()
-
     if not text:
         return render_template('index.html', error='Please enter some text.')
-
-    if predictor is None:
-        return render_template('result.html', demo_mode=True,
-                               text=text, url=url, headline=headline,
-                               result=_demo_result(text))
-
-    return render_template('result.html',
-                            **_full_predict(text, url, headline))
+    return render_template('result.html', **_full_predict(text, url, headline))
 
 
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
-    """JSON API endpoint for programmatic use."""
     data = request.get_json()
     if not data or 'text' not in data:
-        return jsonify({'error': 'Missing "text" field'}), 400
-
-    text = data['text']
-    url = data.get('url', '')
-    headline = data.get('headline', '')
-
-    if predictor is None:
-        return jsonify(_demo_result(text))
-
-    result = _full_predict(text, url, headline)
-    # Remove HTML-heavy fields for JSON response
+        return jsonify({'error': 'Missing text field'}), 400
+    result = _full_predict(data['text'], data.get('url',''), data.get('headline',''))
     result.pop('highlighted_html', None)
-    result.pop('sentence_html', None)
     return jsonify(result)
+
+
+@app.route('/compare')
+def compare():
+    results_path = os.path.join(MODELS_DIR, 'model_results.json')
+    model_results = None
+    if os.path.exists(results_path):
+        with open(results_path) as f:
+            model_results = json.load(f)
+    return render_template('compare.html', model_results=model_results)
 
 
 @app.route('/dashboard')
 def dashboard():
-    """Analytics dashboard showing clustering and topic modeling results."""
-    # Load pre-computed unsupervised results if available
-    tsne_data = None
-    topic_data = None
-
-    tsne_path = os.path.join(MODELS_DIR, 'tsne_results.json')
-    topics_path = os.path.join(MODELS_DIR, 'topic_words.json')
-
-    if os.path.exists(tsne_path):
-        with open(tsne_path) as f:
+    tsne_data = topic_data = None
+    if os.path.exists(os.path.join(MODELS_DIR, 'tsne_results.json')):
+        with open(os.path.join(MODELS_DIR, 'tsne_results.json')) as f:
             tsne_data = json.load(f)
-
-    if os.path.exists(topics_path):
-        with open(topics_path) as f:
+    if os.path.exists(os.path.join(MODELS_DIR, 'topic_words.json')):
+        with open(os.path.join(MODELS_DIR, 'topic_words.json')) as f:
             topic_data = json.load(f)
-
     return render_template('dashboard.html',
                            tsne_data=json.dumps(tsne_data) if tsne_data else 'null',
                            topic_data=json.dumps(topic_data) if topic_data else 'null')
 
 
-@app.route('/compare')
-def compare():
-    """Model comparison table."""
-    results_path = os.path.join(MODELS_DIR, 'model_results.json')
-    model_results = None
-
-    if os.path.exists(results_path):
-        with open(results_path) as f:
-            model_results = json.load(f)
-
-    return render_template('compare.html', model_results=model_results)
-
-
-# ─── Prediction Logic ─────────────────────────────────────────────────────────
-
-def _full_predict(text: str, url: str = '', headline: str = '') -> dict:
-    """Run the full prediction pipeline."""
-
+def _full_predict(text, url='', headline=''):
     # 1. Language detection + translation
-    lang_result = prepare_text_for_classification(text)
+    lang_result    = prepare_text_for_classification(text)
     text_for_model = lang_result['text_for_model']
-    language = lang_result['language']
+    language       = lang_result['language']
     was_translated = lang_result['was_translated']
 
-    # 2. ML prediction
-    ml_result = predictor.predict(text_for_model)
+    # 2. Classical ML
+    classical_result = None
+    if classical_predictor:
+        try:
+            classical_result = classical_predictor.predict(text_for_model)
+        except Exception as e:
+            print(f'Classical error: {e}')
 
-    # 3. Source credibility scoring
-    cred_result = credibility_scorer.score(
-        text=text, url=url or None, headline=headline or None
-    )
+    # 3. BERT
+    bert_result = None
+    if bert_model and bert_tokenizer:
+        bert_result = predict_bert(text_for_model)
 
-    # 4. Combined final score
+    # 4. Primary model = BERT if available, else classical
+    if bert_result and bert_result.get('available'):
+        primary_result = bert_result
+        primary_model  = 'DistilBERT'
+    elif classical_result:
+        primary_result = classical_result
+        primary_model  = classical_result.get('model_used', 'Classical ML')
+    else:
+        primary_result = {'label':'UNKNOWN','fake_prob':0.5,'real_prob':0.5,'confidence':0.5}
+        primary_model  = 'None'
+
+    # 5. Source credibility
+    cred_result = credibility_scorer.score(text=text, url=url or None, headline=headline or None)
+
+    # 6. Combined final score
     final = combined_score(
-        ml_fake_prob=ml_result['fake_prob'],
+        ml_fake_prob=primary_result['fake_prob'],
         credibility_score=cred_result['overall_score']
     )
 
-    # 5. LIME word highlighting (if available)
+    # 7. Sentence highlighting
     highlighted_html = text
-    fake_words = []
-    if lime_explainer:
-        try:
-            lime_result = lime_explainer.explain(text_for_model, n_features=15)
-            highlighted_html = lime_result.get('html', text)
-            fake_words = lime_result.get('fake_words', [])
-        except Exception as e:
-            print(f"LIME error: {e}")
-
-    # 6. Sentence-level highlighting
-    sentence_html = text
-    sentence_results = []
     try:
         from explainability import highlight_suspicious_sentences
-        with open(os.path.join(MODELS_DIR, 'best_model.pkl'), 'rb') as f:
-            bundle = pickle.load(f)
-        with open(os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl'), 'rb') as f:
-            vec = pickle.load(f)
-        sent_result = highlight_suspicious_sentences(text_for_model, bundle['model'], vec)
-        sentence_html = sent_result.get('html', text)
-        sentence_results = sent_result.get('sentences', [])
+        mp = os.path.join(MODELS_DIR, 'best_model.pkl')
+        vp = os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl')
+        if os.path.exists(mp) and os.path.exists(vp):
+            with open(mp,'rb') as f: bundle = pickle.load(f)
+            with open(vp,'rb') as f: vec    = pickle.load(f)
+            sent = highlight_suspicious_sentences(text_for_model, bundle['model'], vec, threshold=0.85)
+            highlighted_html = sent.get('html', text)
     except Exception as e:
-        print(f"Sentence highlight error: {e}")
+        print(f'Highlight error: {e}')
 
     return {
-        'text': text,
-        'headline': headline,
-        'url': url,
-        'language': language,
-        'was_translated': was_translated,
-        'ml_result': ml_result,
-        'credibility': cred_result,
-        'final': final,
+        'text':             text,
+        'headline':         headline,
+        'url':              url,
+        'language':         language,
+        'was_translated':   was_translated,
+        'primary_result':   primary_result,
+        'primary_model':    primary_model,
+        'bert_result':      bert_result,
+        'classical_result': classical_result,
+        'credibility':      cred_result,
+        'final':            final,
         'highlighted_html': highlighted_html,
-        'sentence_html': sentence_html,
-        'sentence_results': sentence_results,
-        'fake_words': fake_words[:8],
-        'demo_mode': False,
+        'demo_mode':        False,
     }
 
-
-def _demo_result(text: str) -> dict:
-    """Demo result when models are not trained yet."""
-    import random
-    random.seed(len(text))
-    fake_prob = round(random.uniform(0.3, 0.8), 3)
-    return {
-        'label': 'FAKE' if fake_prob > 0.5 else 'REAL',
-        'confidence': fake_prob if fake_prob > 0.5 else 1 - fake_prob,
-        'fake_prob': fake_prob,
-        'real_prob': round(1 - fake_prob, 3),
-        'note': 'DEMO MODE — Train models first by running the notebooks.',
-        'demo_mode': True,
-    }
-
-
-# ─── Entry Point ─────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
     load_models()

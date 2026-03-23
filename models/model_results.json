@@ -22,5 +22,13 @@
     "Precision": 96.39,
     "Recall": 98.15,
     "ROC-AUC": 99.62
+  },
+  {
+    "Model": "DistilBERT",
+    "Accuracy": 94.67,
+    "F1 Score": 94.56,
+    "Precision": 96.53,
+    "Recall": 92.67,
+    "ROC-AUC": 98.97
   }
 ]
