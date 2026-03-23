@@ -8,3 +8,7 @@ datasets/
 *.egg-info
 dist/
 *.ipynb_checkpoints
+models/bert_model/
+models/*.pkl
+models/*.png
+models/*.json
