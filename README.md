@@ -99,7 +99,6 @@ FakeNewsDetector/
 │   └── result.html
 ├── tests/
 │   ├── test_preprocess.py
-│   └── test_predict.py
 ├── app.py                       # Flask application
 ├── requirements.txt
 └── README.md
@@ -123,6 +122,8 @@ python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt')"
 # 4. Run notebooks in order:
 #    notebooks/01_EDA_and_Preprocessing.ipynb
 #    notebooks/02_Supervised_Models.ipynb
+#    notebooks/03_BERT_Finetune.ipynb
+
 
 # 5. Start Flask app
 python app.py
