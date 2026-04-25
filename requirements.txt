@@ -29,11 +29,6 @@ torch>=2.0.0          # CPU version — for GPU: torch>=2.0.0+cu118
 datasets>=2.14.0      # HuggingFace datasets (for BERT fine-tuning)
 tokenizers>=0.14.0
 
-# ─── Topic Modeling ─────────────────────────────────────
-# LDA is in scikit-learn (no extra install)
-# For advanced topic modeling (optional):
-# gensim>=4.3.0
-
 # ─── Visualization ──────────────────────────────────────
 matplotlib>=3.7.0
 seaborn>=0.12.0

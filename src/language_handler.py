@@ -4,7 +4,7 @@ language_handler.py
 Detects input language and translates non-English text to English
 before passing through the classification pipeline.
 
-Supported:  English, Hindi (expandable to any langdetect language)
+Supported:  English, Multiregional Languages of India
 Requires:   pip install langdetect deep-translator
 """
 
