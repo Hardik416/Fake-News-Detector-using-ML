@@ -1,8 +1,8 @@
 """
 preprocess.py
 -------------
-Text cleaning, tokenization, and TF-IDF vectorization pipeline.
-Works for both English and translated Hindi text.
+Text cleaning and TF-IDF vectorization pipeline.
+Works for both English and translated Multilingual text.
 """
 
 import re
