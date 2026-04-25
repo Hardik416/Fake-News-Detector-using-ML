@@ -113,23 +113,6 @@ def load_isot(fake_path: str = 'datasets/isot_fake.csv',
     return df[['text', 'label', 'subject']] if 'subject' in df.columns else df[['text', 'label']]
 
 
-def load_liar(path: str = 'datasets/liar_dataset.csv') -> pd.DataFrame:
-    """
-    Load LIAR dataset. Maps 6 labels to binary:
-    true/mostly-true/half-true → 0 (real)
-    barely-true/false/pants-fire → 1 (fake)
-    """
-    df = pd.read_csv(path, sep='\t', header=None)
-    df.columns = ['id', 'label', 'text', 'subject', 'speaker', 'job',
-                  'state', 'party', 'barely_true', 'false_count',
-                  'half_true', 'mostly_true', 'pants_on_fire', 'context']
-    label_map = {'true': 0, 'mostly-true': 0, 'half-true': 0,
-                 'barely-true': 1, 'false': 1, 'pants-fire': 1}
-    df['label'] = df['label'].map(label_map)
-    df = clean_dataframe(df[['text', 'label']], text_col='text', label_col='label')
-    return df[['text', 'label']]
-
-
 # ─── TF-IDF Vectorizer ────────────────────────────────────────────────────────
 
 def build_tfidf(texts, max_features: int = 50000, ngram_range: tuple = (1, 2)):
@@ -162,3 +145,4 @@ def save_vectorizer(vectorizer, path: str = 'models/tfidf_vectorizer.pkl'):
 def load_vectorizer(path: str = 'models/tfidf_vectorizer.pkl'):
     with open(path, 'rb') as f:
         return pickle.load(f)
+

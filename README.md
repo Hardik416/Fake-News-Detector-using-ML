@@ -29,9 +29,9 @@ Input Text / Article
     ┌──────────────────────┼──────────────────────┐
     │                      │                      │
     ▼                      ▼                      ▼
-Supervised              Source              Explainability
-ML Models             Credibility           (LIME + SHAP)
-(predict.py)        (credibility.py)       (explainability.py)
+ML Models (BERT)         Source              Explainability
++ Classical ML         Credibility           (LIME + SHAP)
+(XGBoost / LR)       (credibility.py)       (explainability.py)
     │                      │                      │
     └──────────────────────┼──────────────────────┘
                            │
@@ -66,15 +66,10 @@ All datasets are freely available online:
 |---|---|---|---|
 | **WELFake** | 72K articles | Kaggle | Primary supervised training |
 | **ISOT Fake News** | 44K articles | Kaggle / UVic | Supervised + topic modeling |
-| **LIAR** | 12K statements | UCI / Kaggle | Multi-class supervised |
-| **Hindi Fake News** | ~4K articles | Kaggle / GitHub | Hindi language support |
-| **MIND / CC-News** | Unlabeled | HuggingFace | Unsupervised clustering |
 
 ### Download Links
 - WELFake: `https://www.kaggle.com/datasets/saurabhshahane/fake-news-classification`
 - ISOT: `https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset`
-- LIAR: `https://www.cs.ucsb.edu/~william/data/liar_dataset.zip`
-- Hindi: `https://www.kaggle.com/datasets/cryptexcode/mpold`
 
 ---
 
@@ -84,9 +79,7 @@ All datasets are freely available online:
 FakeNewsDetector/
 ├── datasets/                    # Raw + cleaned datasets
 │   ├── welfake_dataset.csv
-│   ├── isot_fake.csv / isot_real.csv
-│   ├── liar_dataset.csv
-│   └── hindi_fake.csv
+│   └── isot_fake.csv / isot_real.csv
 ├── notebooks/
 │   ├── 01_EDA_and_Preprocessing.ipynb
 │   ├── 02_Supervised_Models.ipynb

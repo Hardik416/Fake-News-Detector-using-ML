@@ -134,19 +134,3 @@ def get_english_text(text: str) -> str:
     """Quick helper: return English version of any input text."""
     prepared = prepare_text_for_classification(text)
     return prepared['text_for_model']
-
-
-if __name__ == '__main__':
-    # Quick test
-    test_cases = [
-        "Breaking: Scientists discover new planet in our solar system.",
-        "यह एक नकली समाचार है जो सोशल मीडिया पर वायरल हो रही है।",  # Hindi fake news
-        "राहुल गांधी ने प्रेस कॉन्फ्रेंस में बड़ा बयान दिया।",       # Hindi political
-    ]
-    for t in test_cases:
-        result = prepare_text_for_classification(t)
-        print(f"\nOriginal  : {t[:60]}...")
-        print(f"Language  : {result['language']['name']} ({result['language']['code']})")
-        print(f"Translated: {result['was_translated']}")
-        if result['was_translated']:
-            print(f"English   : {result['text_for_model'][:80]}...")

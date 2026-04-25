@@ -169,29 +169,4 @@ def print_full_report(y_true, y_pred, target_names=('Real', 'Fake')):
     print("="*60)
 
 
-# ─── Entry point ─────────────────────────────────────────────────────────────
 
-if __name__ == '__main__':
-    from preprocess import load_welfake, split_data
-
-    print("Loading dataset...")
-    df = load_welfake('datasets/welfake_dataset.csv')
-    print(f"Dataset shape: {df.shape}")
-    print(f"Label distribution:\n{df['label'].value_counts()}")
-
-    X_train, X_test, y_train, y_test = split_data(df)
-
-    print("\nBuilding TF-IDF vectors...")
-    vectorizer, X_train_tfidf = build_tfidf(X_train)
-    X_test_tfidf = vectorizer.transform(X_test)
-
-    from preprocess import save_vectorizer
-    save_vectorizer(vectorizer)
-
-    print("\nTraining models...")
-    results_df = train_all_models(X_train_tfidf, y_train, X_test_tfidf, y_test)
-
-    print("\n" + "="*60)
-    print("MODEL COMPARISON TABLE")
-    print("="*60)
-    print(results_df.to_string(index=False))
