@@ -1,10 +1,22 @@
 venv/
-datasets/
-models/
 __pycache__/
 *.pyc
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+
+# Data and Models
+datasets/
+models/
 *.pkl
-*.png
 *.json
 *.safetensors
 *.bin
+
+# OS files
+.DS_Store
+Thumbs.db
