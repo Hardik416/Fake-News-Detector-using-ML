@@ -6,7 +6,7 @@
 ![BERT](https://img.shields.io/badge/DistilBERT-HuggingFace-yellow?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
 
-A production-grade, multilingual fake news detection system combining **supervised ML**, **unsupervised clustering**, **explainability (LIME/SHAP)**, and **source credibility analysis** — with a dark-themed Flask web interface.
+A production-grade, multilingual fake news detection system combining **supervised ML**, **explainability (LIME/SHAP)**, and **source credibility analysis** — with a dark-themed Flask web interface.
 
 ---
 
@@ -26,18 +26,14 @@ Input Text / Article
         │  TF-IDF Vectors │
         └────────┬────────┘
                  │
-    ┌────────────┼────────────┐
-    │            │            │
-    ▼            ▼            ▼
-Supervised    Unsupervised  Source
-ML Models     Analysis      Credibility
-(predict.py)  (unsupervised)(credibility.py)
-    │            │            │
-    │   K-Means  │  Domain    │
-    │   LDA      │  URL scan  │
-    │   DBSCAN   │  Headline  │
-    │            │            │
-    └────────────┼────────────┘
+    ┌──────────────────────┼──────────────────────┐
+    │                      │                      │
+    ▼                      ▼                      ▼
+Supervised              Source              Explainability
+ML Models             Credibility           (LIME + SHAP)
+(predict.py)        (credibility.py)       (explainability.py)
+    │                      │                      │
+    └──────────────────────┼──────────────────────┘
                  │
         ┌────────▼────────┐
         │  Explainability │  (explainability.py)
@@ -59,8 +55,6 @@ ML Models     Analysis      Credibility
 |---|---|
 | **Supervised ML** | Logistic Regression, Random Forest, XGBoost — compared on F1/AUC |
 | **Deep Learning** | Fine-tuned `distilbert-base-multilingual-cased` (Week 4) |
-| **Unsupervised** | K-Means clustering, LDA topic modeling, DBSCAN anomaly detection |
-| **Visualization** | t-SNE 2D article map, elbow curve, topic word clouds |
 | **Multilingual** | English + Hindi (auto-detect + translate pipeline) |
 | **Explainability** | LIME word-level highlighting, SHAP feature importance |
 | **Credibility** | Domain reputation, URL analysis, headline clickbait detection |
@@ -101,26 +95,20 @@ FakeNewsDetector/
 ├── notebooks/
 │   ├── 01_EDA_and_Preprocessing.ipynb
 │   ├── 02_Supervised_Models.ipynb
-│   ├── 03_Unsupervised_Clustering_LDA.ipynb
 │   ├── 04_BERT_Finetune.ipynb
 │   └── 05_Explainability_LIME_SHAP.ipynb
 ├── models/                      # Saved trained models
 │   ├── best_model.pkl
-│   ├── tfidf_vectorizer.pkl
-│   ├── kmeans_model.pkl
-│   └── lda_model.pkl
+│   └── tfidf_vectorizer.pkl
 ├── src/
 │   ├── preprocess.py            # Text cleaning + TF-IDF
 │   ├── predict.py               # Supervised ML training + inference
 │   ├── language_handler.py      # Language detection + translation
-│   ├── unsupervised.py          # K-Means, LDA, DBSCAN, t-SNE
 │   ├── explainability.py        # LIME + SHAP
 │   └── credibility.py           # Source credibility scoring
 ├── templates/                   # Flask HTML templates
 │   ├── index.html
-│   ├── result.html
-│   ├── dashboard.html
-│   └── compare.html
+│   └── result.html
 ├── tests/
 │   ├── test_preprocess.py
 │   └── test_predict.py
@@ -147,7 +135,6 @@ python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt')"
 # 4. Run notebooks in order:
 #    notebooks/01_EDA_and_Preprocessing.ipynb
 #    notebooks/02_Supervised_Models.ipynb
-#    notebooks/03_Unsupervised_Clustering_LDA.ipynb
 
 # 5. Start Flask app
 python app.py
@@ -217,7 +204,7 @@ pytest tests/ -v --cov=src/
 ## Author
 
 Built as a college ML project demonstrating:
-- Supervised + Unsupervised learning on real-world NLP data
+- Supervised learning on real-world NLP data
 - Model explainability and interpretability
 - Multilingual AI system design
 - Full-stack deployment

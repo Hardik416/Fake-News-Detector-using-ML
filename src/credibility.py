@@ -1,6 +1,5 @@
 """
 credibility.py
---------------
 Source credibility analysis engine.
 Scores news articles based on:
   1. Domain reputation  (known credible / known fake domains)

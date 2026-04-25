@@ -3,8 +3,7 @@ app.py - TruthLens Fake News Detector
 Full pipeline: Language Detection → BERT + Classical ML → Credibility → Result
 """
 
-import os, sys, json, pickle
-import numpy as np
+import os, sys, pickle
 from flask import Flask, render_template, request, jsonify
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -113,31 +112,8 @@ def api_predict():
     return jsonify(result)
 
 
-@app.route('/compare')
-def compare():
-    results_path = os.path.join(MODELS_DIR, 'model_results.json')
-    model_results = None
-    if os.path.exists(results_path):
-        with open(results_path) as f:
-            model_results = json.load(f)
-    return render_template('compare.html', model_results=model_results)
-
-
-@app.route('/dashboard')
-def dashboard():
-    tsne_data = topic_data = None
-    if os.path.exists(os.path.join(MODELS_DIR, 'tsne_results.json')):
-        with open(os.path.join(MODELS_DIR, 'tsne_results.json')) as f:
-            tsne_data = json.load(f)
-    if os.path.exists(os.path.join(MODELS_DIR, 'topic_words.json')):
-        with open(os.path.join(MODELS_DIR, 'topic_words.json')) as f:
-            topic_data = json.load(f)
-    return render_template('dashboard.html',
-                           tsne_data=json.dumps(tsne_data) if tsne_data else 'null',
-                           topic_data=json.dumps(topic_data) if topic_data else 'null')
-
-
 def _full_predict(text, url='', headline=''):
+
     # 1. Language detection + translation
     lang_result    = prepare_text_for_classification(text)
     text_for_model = lang_result['text_for_model']
@@ -181,12 +157,13 @@ def _full_predict(text, url='', headline=''):
     highlighted_html = text
     try:
         from explainability import highlight_suspicious_sentences
-        mp = os.path.join(MODELS_DIR, 'best_model.pkl')
-        vp = os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl')
-        if os.path.exists(mp) and os.path.exists(vp):
-            with open(mp,'rb') as f: bundle = pickle.load(f)
-            with open(vp,'rb') as f: vec    = pickle.load(f)
-            sent = highlight_suspicious_sentences(text_for_model, bundle['model'], vec, threshold=0.85)
+        if classical_predictor and hasattr(classical_predictor, 'model'):
+            sent = highlight_suspicious_sentences(
+                text_for_model, 
+                classical_predictor.model, 
+                classical_predictor.vectorizer, 
+                threshold=0.85
+            )
             highlighted_html = sent.get('html', text)
     except Exception as e:
         print(f'Highlight error: {e}')
@@ -203,8 +180,7 @@ def _full_predict(text, url='', headline=''):
         'classical_result': classical_result,
         'credibility':      cred_result,
         'final':            final,
-        'highlighted_html': highlighted_html,
-        'demo_mode':        False,
+        'highlighted_html': highlighted_html
     }
 
 
