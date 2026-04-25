@@ -21,6 +21,12 @@ except ImportError:
 SUPPORTED_LANGUAGES = {
     'en': 'English',
     'hi': 'Hindi',
+    'mr': 'Marathi',
+    'bn': 'Bengali',
+    'ta': 'Tamil',
+    'te': 'Telugu',
+    'gu': 'Gujarati',
+    'pa': 'Punjabi',
 }
 
 # Languages we auto-translate to English before classification

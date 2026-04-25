@@ -6,7 +6,7 @@
 ![BERT](https://img.shields.io/badge/DistilBERT-HuggingFace-yellow?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
 
-A production-grade, multilingual fake news detection system combining **supervised ML**, **explainability (LIME/SHAP)**, and **source credibility analysis** — with a dark-themed Flask web interface.
+A production-grade, multilingual fake news detection system with multi-regional support for major Indian languages (Hindi, Marathi, Bengali, Punjabi, Tamil, Telugu, Gujarati), combining **supervised ML**, **explainability (LIME/SHAP)**, and **source credibility analysis** — with a dark-themed Flask web interface.
 
 ---
 
@@ -17,8 +17,8 @@ Input Text / Article
         │
         ▼
 ┌─────────────────────────────────┐
-│   Language Detection (langdetect)│
-│   Hindi → English Translation   │
+│  Language Detection(langdetect) │
+│  Regional → English Translation │
 └────────────────┬────────────────┘
                  │
         ┌────────▼────────┐
@@ -50,7 +50,7 @@ ML Models (BERT)         Source              Explainability
 |---|---|
 | **Supervised ML** | Logistic Regression, Random Forest, XGBoost — compared on F1/AUC |
 | **Deep Learning** | Fine-tuned `distilbert-base-multilingual-cased` (Week 4) |
-| **Multilingual** | English + Hindi (auto-detect + translate pipeline) |
+| **Multilingual** | English + 7 Major Indian Languages (Hindi, Marathi, Bengali, Tamil, etc.) |
 | **Explainability** | LIME word-level highlighting, SHAP feature importance |
 | **Credibility** | Domain reputation, URL analysis, headline clickbait detection |
 | **Web UI** | Dark-themed Flask app with confidence meters and sentence highlighting |
