@@ -34,17 +34,12 @@ ML Models             Credibility           (LIME + SHAP)
 (predict.py)        (credibility.py)       (explainability.py)
     │                      │                      │
     └──────────────────────┼──────────────────────┘
-                 │
-        ┌────────▼────────┐
-        │  Explainability │  (explainability.py)
-        │  LIME + SHAP    │
-        │  Word highlight │
-        └────────┬────────┘
-                 │
-        ┌────────▼────────┐
-        │  Combined Score │  60% ML + 40% Credibility
-        │  Final Verdict  │
-        └─────────────────┘
+                           │
+                           │
+                  ┌────────▼────────┐
+                  │  Combined Score │  60% ML + 40% Credibility
+                  │  Final Verdict  │
+                  └─────────────────┘
 ```
 
 ---
