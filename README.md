@@ -83,8 +83,7 @@ FakeNewsDetector/
 ├── notebooks/
 │   ├── 01_EDA_and_Preprocessing.ipynb
 │   ├── 02_Supervised_Models.ipynb
-│   ├── 04_BERT_Finetune.ipynb
-│   └── 05_Explainability_LIME_SHAP.ipynb
+│   └── 03_BERT_Finetune.ipynb
 ├── models/                      # Saved trained models
 │   ├── best_model.pkl
 │   └── tfidf_vectorizer.pkl
